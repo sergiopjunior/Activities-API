@@ -26,6 +26,10 @@ class Activity(Base):
     person_id = Column(Integer, ForeignKey("people.id"))
     person = relationship("Person")
 
+    def __repr__(self):
+        return "Activity: ID: {}, Name: {}, Person ID: {}, Person: {}".format(
+            self.id, self.name, self.person_id, self.person.name)
+
 
 def init_db():
     Base.metadata.create_all(bind=engine)
