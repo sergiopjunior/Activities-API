@@ -18,6 +18,9 @@ class Person(Base):
     def __repr__(self):
         return "Person: ID: {}, Name: {}, Age: {}".format(self.id, self.name, self.age)
 
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 
 class Activity(Base):
     __tablename__ = "activities"
@@ -29,6 +32,9 @@ class Activity(Base):
     def __repr__(self):
         return "Activity: ID: {}, Name: {}, Person ID: {}, Person: {}".format(
             self.id, self.name, self.person_id, self.person.name)
+
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 def init_db():
