@@ -17,7 +17,13 @@ def add_person(person):
     db_session.add(new_person)
     db_session.commit()
 
-    return new_person
+    new_person_dict = {
+        "id": new_person.id,
+        "name": new_person.name,
+        "age": new_person.age
+    }
+
+    return new_person_dict
 
 
 def get_person_list():
@@ -34,7 +40,8 @@ def get_person_by_id(pid):
     :param pid: Person ID
     :return: Person type object
     """
-    return Person.query.filter_by(id=pid).first()
+    person = Person.query.filter_by(id=pid).first()
+    return person.to_dict() if person else None
 
 
 def alter_person_by_id(pid, person_data):
@@ -59,7 +66,13 @@ def alter_person_by_id(pid, person_data):
         db_session.add(person)
         db_session.commit()
 
-        return old_person
+        new_person = {
+            "id": pid,
+            "name": person.name,
+            "age": person.age
+        }
+
+        return old_person, new_person
 
     # If no record is found returns an AttributeErrorException
     raise AttributeError
@@ -75,10 +88,15 @@ def delete_person_by_id(pid):
 
     # If a record is found changes to the database are made
     if person:
+        deleted_person = {
+            "id": pid,
+            "name": person.name,
+            "age": person.age
+        }
         db_session.delete(person)
         db_session.commit()
 
-        return person
+        return deleted_person
 
     # If no record is found returns an AttributeErrorException
     raise AttributeError
@@ -90,17 +108,31 @@ def delete_person_by_id(pid):
 def add_activity(activity):
     """
     Add a new activity record
+    :param pid: Person ID
     :param activity: New activity data
     :return: New activity record
     """
-    new_activity = Activity(
-        name=activity["name"],
-        age=activity["person_id"]
-    )
-    db_session.add(new_activity)
-    db_session.commit()
+    person = get_person_by_id(activity["person_id"])
 
-    return new_activity
+    # If the person responsible for the activity is found the new record is added
+    if person:
+        new_activity = Activity(
+            name=activity["name"],
+            person=person
+        )
+        db_session.add(new_activity)
+        db_session.commit()
+
+        new_activity_dict = {
+            "id": new_activity.id,
+            "name": new_activity.name,
+            "responsible": new_activity.person.to_dict()
+        }
+
+        return new_activity_dict
+
+    # If the person responsible for the activity is not found, an AttributeErrorException is returned.
+    raise AttributeError
 
 
 def get_activity_list():
@@ -117,7 +149,9 @@ def get_activity_by_id(aid):
     :param aid: Activity ID
     :return: Activity type object
     """
-    return Activity.query.filter_by(id=aid).first()
+    activity = Activity.query.filter_by(id=aid).first()
+
+    return activity.to_dict() if activity else None
 
 
 def alter_activity_by_id(aid, activity_data):
@@ -128,16 +162,27 @@ def alter_activity_by_id(aid, activity_data):
     :return: Record changed
     """
     activity = Activity.query.filter_by(id=aid).first()
+    person = get_person_by_id(activity_data["person_id"])
 
     # If a record is found changes to the database are made
-    if activity:
+    if activity and person:
+        old_activity = {
+            "id": aid,
+            "name": activity.name,
+            "responsible": activity.person.to_dict()
+        }
         activity.name = activity_data["name"]
-        activity.age = activity_data["age"]
+        activity.person = person
 
         db_session.add(activity)
         db_session.commit()
 
-        return activity
+        new_activity = {
+            "id": aid,
+            "name": activity.name,
+            "responsible": activity.person.to_dict()
+        }
+        return old_activity, new_activity
 
     # If no record is found returns an AttributeErrorException
     raise AttributeError
@@ -153,10 +198,15 @@ def delete_activity_by_id(aid):
 
     # If a record is found changes to the database are made
     if activity:
+        deleted_activity = {
+            "id": aid,
+            "name": activity.name,
+            "responsible": activity.person.to_dict()
+        }
         db_session.delete(activity)
         db_session.commit()
 
-        return activity
+        return deleted_activity
 
     # If no record is found returns an AttributeErrorException
     raise AttributeError
