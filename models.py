@@ -9,6 +9,19 @@ Base = declarative_base()
 Base.query = db_session.query_property()
 
 
+class Administrator(Base):
+    __tablename__ = "administrators"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(20), index=True, nullable=False)
+    password = Column(String(16), nullable=False)
+
+    def __repr__(self):
+        return "Administrator ID: {}, Username: {}, Password: {}".format(self.id, self.username, self.password)
+
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+
 class Person(Base):
     __tablename__ = "people"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -26,12 +39,13 @@ class Activity(Base):
     __tablename__ = "activities"
     id = Column(Integer, primary_key=True)
     name = Column(String(80), nullable=False)
+    status = Column(String(20), nullable=False)
     person_id = Column(Integer, ForeignKey("people.id"))
     person = relationship("Person")
 
     def __repr__(self):
-        return "Activity: ID: {}, Name: {}, Person ID: {}, Person: {}".format(
-            self.id, self.name, self.person_id, self.person.name)
+        return "Activity: ID: {}, Name: {}, Status: {}, Person ID: {}, Person: {}".format(
+            self.id, self.name, self.status, self.person_id, self.person.name)
 
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
