@@ -1,4 +1,33 @@
-from models import Person, Activity, db_session
+from models import Person, Activity, Administrator, db_session
+
+
+########################
+# Admin model methods  #
+########################
+def add_admin(admin):
+    """
+    Add a new admin record
+    :param admin: New admin data
+    :return: New admin record
+    """
+    new_admin = Administrator(
+        username=admin["username"],
+        password=admin["password"]
+    )
+    db_session.add(new_admin)
+    db_session.commit()
+
+    return new_admin.to_dict()
+
+
+def get_admin_by_username(username):
+    """
+    Returns the admin with the given username
+    :param username: Admin username
+    :return: The record found
+    """
+    admin = Administrator.query.filter_by(username=username).first()
+    return admin.to_dict() if admin else None
 
 
 ########################
@@ -17,13 +46,7 @@ def add_person(person):
     db_session.add(new_person)
     db_session.commit()
 
-    new_person_dict = {
-        "id": new_person.id,
-        "name": new_person.name,
-        "age": new_person.age
-    }
-
-    return new_person_dict
+    return new_person.to_dict()
 
 
 def get_person_list():
