@@ -1,9 +1,42 @@
 from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
+from flask_httpauth import HTTPBasicAuth
 from utils import *
 
+auth = HTTPBasicAuth()
 app = Flask(__name__)
 api = Api(app)
+
+
+@auth.verify_password
+def verify_password(username, password):
+    if username and password:
+        admin = get_admin_by_username(username)
+        if admin:
+            return password == admin["password"]
+    return False
+
+
+# Administrator class methods #
+class Administrator(Resource):
+    @auth.login_required
+    def put(self):
+        response = None
+        try:
+            data = request.json
+            new_admin = add_admin(data)
+            response = {
+                "Status": "Success",
+                "Admin Added": new_admin
+            }
+        except Exception as e:
+            print("Error: {}, Message: {}".format(type(e), e))
+            response = {
+                "Status": f"{type(e).__name__}",
+                "Message": f"{e}"
+            }
+        finally:
+            return response
 
 
 # Person class methods #
@@ -26,6 +59,7 @@ class Person(Resource):
         finally:
             return response
 
+    @auth.login_required
     def put(self, pid):
         response = None
         try:
@@ -44,6 +78,7 @@ class Person(Resource):
         finally:
             return response
 
+    @auth.login_required
     def post(self, pid):
         response = None
         try:
@@ -69,6 +104,7 @@ class Person(Resource):
         finally:
             return response
 
+    @auth.login_required
     def delete(self, pid):
         response = None
         try:
@@ -116,15 +152,16 @@ class Activity(Resource):
         finally:
             return response
 
+    @auth.login_required
     def put(self, aid):
         response = None
         try:
             data = request.json
             new_activity = add_activity(data)
             response = {
-                    "Status": "Success",
-                    "Person Added": new_activity
-                }
+                "Status": "Success",
+                "Person Added": new_activity
+            }
         except AttributeError:
             response = {
                 "Status": "Error",
@@ -139,6 +176,7 @@ class Activity(Resource):
         finally:
             return response
 
+    @auth.login_required
     def post(self, aid):
         response = None
         try:
@@ -164,6 +202,7 @@ class Activity(Resource):
         finally:
             return response
 
+    @auth.login_required
     def delete(self, aid):
         response = None
         try:
@@ -191,6 +230,7 @@ class ActivityList(Resource):
         return [{"id": a.id, "name": a.name, "responsible": a.person.to_dict()} for a in get_activity_list()]
 
 
+api.add_resource(Administrator, "/admin/")
 api.add_resource(Person, "/person/<int:pid>/")
 api.add_resource(PersonList, "/person/")
 api.add_resource(Activity, "/activity/<int:aid>/")
